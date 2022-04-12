@@ -1,10 +1,14 @@
 function umax = topComp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
                  angle, vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, scale, max_loop, ...
-                 zero_dens_x, zero_dens_y, force);
+                 zero_dens_x, zero_dens_y, force, generic_filename);
+    [status, msg, msgID] = mkdir('apdl_const');
+    [status, msg, msgID] = mkdir('maps_const');
+    [status, msg, msgID] = mkdir('pics_const');
+    [status, msg, msgID] = mkdir('gifs_const');
     x(1:nel_y,1:nel_x) = volfrac; 
     loop = 0; 
     change = 1.;
-    max_change = 0.01;
+    max_change = 0.04;
     % Setting area of zero density
     el_size = size_x / nel_x;
     zero_nel_x = round( (size_x - zero_dens_x) / el_size );
@@ -16,6 +20,7 @@ function umax = topComp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
             x(ely,elx) = 0.001;
         end
     end
+    active_array = 1-passive;
 
     % Stiffness matrix
     [KE] = lk(size_x / nel_x, size_y / nel_y, ...
@@ -51,7 +56,7 @@ function umax = topComp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
         % PLOT DENSITIES  
         colormap(gray); imagesc(-x); axis equal; axis tight; axis off;pause(1e-6);
         if first == 0
-            gif(sprintf('pics_const\\angle_%3d gifochka.gif', int8(angle*180/pi))); 
+            gif(convertStringsToChars("gifs_const\\GIF_"+generic_filename+".gif")); 
         else
             gif;
         end
@@ -67,16 +72,17 @@ function umax = topComp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
     colormap(gray);
     imFinal = 1-x;
     imFinal = imresize(imFinal, scale, 'nearest');
-    imwrite(imFinal, sprintf("pics_const\\angle_%3d vfc_fib_%0.2f x_%.0f y_%.0f vfc_%0.2f.png", ...
-                                int8(angle*180/pi), vfc_fiber, size_x, size_y, volfrac), ...
-            "png"); axis equal; axis tight; axis off;
+    imwrite(imFinal, 'pics_const\\TOP_'+generic_filename+'.png',"png");
+    axis equal; axis tight; axis off;
     % Save APDL file
     [E1, E2, mu12, mu21, g12] = composite_const(E_fiber, E_mx, mu_fiber, mu_mx, vfc_fiber);
     %fixed_dofs = union([1:2:2*(nel_y+1)],[2*(nel_x+1)*(nel_y+1)]);
     plane_save_apdl(E1, E2, mu12, mu21, mu12, g12, g12, size_x/nel_x, size_y/nel_y, ...
                     1, nel_x, nel_y, force, fixed_dofs, x, angle, 0.5, ...
-                    sprintf("apdl_const\\angle_%3d vfc_fib_%0.2f x_%.0f y_%.0f vfc_%0.2f.ans", ...
-                            int8(angle*180/pi), vfc_fiber, size_x, size_y, volfrac))
+                    'apdl_const\\APDL_'+generic_filename+'.ans')
+    d_mx = plain_d_matrix(E1, E2, mu12, mu21, g12, angle);
+    fea_maps(nel_x, nel_y, U, el_size, el_size, d_mx, x, 10, 0.5, '_MAP_'+generic_filename+'.png')
+    close all
 end
 
 %%%%%%%%%% OPTIMALITY CRITERIA UPDATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
