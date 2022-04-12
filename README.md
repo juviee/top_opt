@@ -8,9 +8,13 @@ Results are contained in:
 + Max displacements in u_matlab.txt
 
 ## Todo:
+
 ~~Fix directories creation~~
+
 0) Investigate diff between ANSYS solution and Matlab solution
+
 	+ ~~Implement color mapping of displacements in Matlab solution( check for fea_plain_mbb_1.m)~~
+
 	+ Fix Mises stress maps
 1) Research dependence of max displacement from laying angle
 	+ Add another calculating scheme that is not symmetric
