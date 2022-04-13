@@ -25,6 +25,7 @@ Results are contained in:
 	+ Check homogenization approach
 3) Implement optimization by laying angle
 4) Implement optimization by fiber density
+5) Implement settings parsing to decrease function args
 
 ## Changelog:
 13/04/2022
