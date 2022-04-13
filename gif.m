@@ -81,7 +81,7 @@ if nargin>0
       
       % Check for an existing .gif file by the same name: 
       if exist(gif_filename,'file')==2
-         OverWrite = false; % By default, do NOT overwrite an existing file by the input name. 
+         OverWrite = true; % By default, do NOT overwrite an existing file by the input name. 
          if nargin>1
             tmp = strncmpi(varargin,'overwrite',4); 
             if any(tmp)
