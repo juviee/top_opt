@@ -13,7 +13,7 @@ Results are contained in:
 
 ~~Fix directories creation~~
 
-0) Investigate diff between ANSYS solution and Matlab solution
+0) ~~Investigate diff between ANSYS solution and Matlab solution~~
 
 	+ ~~Implement color mapping of displacements in Matlab solution( check for fea_plain_mbb_1.m)~~
 
@@ -25,9 +25,14 @@ Results are contained in:
 	+ Check homogenization approach
 3) Implement optimization by laying angle
 4) Implement optimization by fiber density
-5) Implement settings parsing to decrease function args
+
+5) ~~Implement settings parsing to decrease function args~~
 
 ## Changelog:
+14/04/2022
++ Implemented settings file parsing
++ Reworked API towards decreasing function args
+
 13/04/2022
 + Implemented other stress maps, fixed stress mises maps
 + Fixed size bug in top_comp.m
