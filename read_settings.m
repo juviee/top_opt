@@ -17,8 +17,6 @@ function read_settings(s_filename)
             lvl2_field_tmp = lvl1_field_tmp.(string(lvl2_name_tmp));
             addSetting(s.topOptSettings.(lvl1_name_tmp),lvl2_name_tmp);
             s.topOptSettings.(lvl1_name_tmp).(lvl2_name_tmp).PersonalValue = lvl2_field_tmp;
-            fprintf("%s.%s.%s\n",lvl1_name_tmp, lvl2_name_tmp, lvl2_field_tmp);
-            fprintf('%s.\n', s.topOptSettings.(lvl1_name_tmp).(lvl2_name_tmp).ActiveValue)
         end
     end
 end

@@ -1,14 +1,42 @@
-function umax = top_comp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
-                 angle, vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, scale, max_loop, ...
-                 zero_dens_x, zero_dens_y, force, generic_filename)
+function umax = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force, generic_filename)
     [~, ~, ~] = mkdir('apdl_const');
     [~, ~, ~] = mkdir('maps_const');
     [~, ~, ~] = mkdir('pics_const');
     [~, ~, ~] = mkdir('gifs_const');
+
+    % Load Settings
+    st_global = settings;
+    st_solver = st_global.topOptSettings.solver_settings;
+    st_constr = st_global.topOptSettings.construction_properties;
+    st_mater = st_global.topOptSettings.material_properties;
+    st_draw = st_global.topOptSettings.drawer_properties;
+    
+    % Init vals
+    size_x = str2double(st_constr.size_x.ActiveValue);
+    size_y = str2double(st_constr.size_y.ActiveValue);
+    zero_dens_x = str2double(st_constr.zero_dens_x.ActiveValue);
+    zero_dens_y = str2double(st_constr.zero_dens_y.ActiveValue);
+
+    nel_x = str2num(st_solver.nel_x.ActiveValue);
+    nel_y = str2num(st_solver.nel_y.ActiveValue);
+    rmin = str2double(st_solver.r_min.ActiveValue);
+    penal = str2double(st_solver.penalty_degree.ActiveValue);
+    volfrac = str2double(st_solver.volfrac.ActiveValue);
+    max_change = str2double(st_solver.max_change.ActiveValue);
+    max_loop = str2double(st_solver.max_loop.ActiveValue);
+
+%     E_fiber = str2double(st_mater.e_fiber.ActiveValue);
+%     E_mx = str2double(st_mater.e_mx.ActiveValue);
+%     mu_fiber = str2double(st_mater.mu_fiber.ActiveValue);
+%     mu_mx = str2double(st_mater.mu_mx.ActiveValue);
+%     vfc_fiber = str2double(st_mater.vfc.ActiveValue);
+
+    scale = str2double(st_draw.scale.ActiveValue);
+
     x(1:nel_y,1:nel_x) = volfrac; 
     loop = 0; 
     change = 1.;
-    max_change = 0.01;
+    
     % Setting area of zero density
     el_size = size_x / nel_x;
     zero_nel_x = round( (size_x - zero_dens_x) / el_size );
