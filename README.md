@@ -28,6 +28,7 @@ Results are contained in:
 13/04/2022
 + Implemented other stress maps, fixed stress mises maps
 + Fixed size bug in top_comp.m
+
 12/04/2022
 + Fixed directories trouble
 + Implemented translation maps
