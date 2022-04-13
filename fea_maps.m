@@ -11,21 +11,22 @@ function fea_maps(nelx, nely, U, x_size, y_size, d_mx, active_passive, plot_el_s
     b_mx = matrix_b(x_size, y_size); % !!! might broke for non-regular mesh
     
     s_m_func = s_mises_closure(d_mx, b_mx);
-    plot_map("S_{mizes}", nelx, nely, U, uy_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 's_m_'+filename);
-%     sx_func = s_x_func_closure(d_mx, b_mx);
-%     sy_func = s_y_func_closure(d_mx, b_mx);
-%     ss_func = s_sum_func_closure(d_mx, b_mx);
+    plot_map("S_{mizes}", nelx, nely, U, s_m_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 's_m_'+filename);
+    
+    sx_func = s_x_func_closure(d_mx, b_mx);
+    sy_func = s_y_func_closure(d_mx, b_mx);
+    sxy_func = s_xy_func_closure(d_mx, b_mx);
 
-%     plot_map("S_{x}", nelx, nely, U, sx_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 's_x_'+filename);
-%     plot_map("S_{y}", nelx, nely, U, sy_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 's_y_'+filename);
-%     plot_map("S_{sum}", nelx, nely, U, ss_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 's_s_'+filename);
+    plot_map("S_{x}", nelx, nely, U, sx_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 's_x_'+filename);
+    plot_map("S_{y}", nelx, nely, U, sy_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 's_y_'+filename);
+    plot_map("S_{xy}", nelx, nely, U, sxy_func, x_size, y_size, active_passive, 1, plot_el_size, vft, 'sxy_'+filename);
 end
 
 function s_full = s_full_func_closure(d_mx, b_mx)
     syms xx yy
-    s_cord = @(u_local, x_local, y_local) double(subs(d_mx * b_mx * transpose(u_local), {xx, yy}, {x_local,y_local} ));
+    s_cord = @(u_local, x_local, y_local) double(subs(d_mx * b_mx * u_local, {xx, yy}, {x_local,y_local} ));
     s_full = @(u_local) table([s_cord(u_local, -1, 1), s_cord(u_local, 1, 1),...
-                               s_cord(u_local, -1, 1), s_cord(u_local, -1, -1)]);
+                               s_cord(u_local, 1, -1), s_cord(u_local, -1, -1)]);
 end
 % TODO: von mises stresses
 % sqrt(s11^2 + s22^2 - s11 s22 + 3 s12^2)
@@ -36,25 +37,20 @@ function s_m = s_mises_closure(d_mx, b_mx)
                           s_full(u_local).Var1(1,:).*s_full(u_local).Var1(2,:)+...
                           3*s_full(u_local).Var1(3,:).^2]);
 end
-% function s_x_func = s_x_func_closure(d_mx, b_mx)
-%     s_full = s_full_func_closure(d_mx, b_mx);
-%     s_x_func = @(u_local) [s_full(u_local).Var1(1),s_full(u_local).Var1(3),...
-%                            s_full(u_local).Var1(5),s_full(u_local).Var1(7)];
-% end
-% 
-% function s_y_func = s_y_func_closure(d_mx, b_mx)
-%     s_full = s_full_func_closure(d_mx, b_mx);
-%     s_y_func = @(u_local) [s_full(u_local).Var1(2),s_full(u_local).Var1(4),...
-%                       s_full(u_local).Var1(6),s_full(u_local).Var1(8)];
-% end
-% 
-% function s_sum = s_sum_func_closure(d_mx, b_mx)
-%     s_full = s_full_func_closure(d_mx, b_mx);
-%     s_sum = @(u_local)[sqrt(s_full(u_local).Var1(1)^2 + s_full(u_local).Var1(2)^2),...
-%                        sqrt(s_full(u_local).Var1(3)^2 + s_full(u_local).Var1(4)^2),...
-%                        sqrt(s_full(u_local).Var1(5)^2 + s_full(u_local).Var1(6)^2),...
-%                        sqrt(s_full(u_local).Var1(7)^2 + s_full(u_local).Var1(8)^2)];
-% end
+function s_x_func = s_x_func_closure(d_mx, b_mx)
+    s_full = s_full_func_closure(d_mx, b_mx);
+    s_x_func = @(u_local) [s_full(u_local).Var1(1,:)];
+end
+
+function s_y_func = s_y_func_closure(d_mx, b_mx)
+    s_full = s_full_func_closure(d_mx, b_mx);
+    s_y_func = @(u_local) [s_full(u_local).Var1(2,:)];
+end
+
+function s_xy_func = s_xy_func_closure(d_mx, b_mx)
+    s_full = s_full_func_closure(d_mx, b_mx);
+    s_xy_func = @(u_local) [s_full(u_local).Var1(3,:)];
+end
 
 function plot_map(val_name, nelx, nely, U, map_function, x_size, y_size, active_passive, num, plot_el_size, vft, filename)
 % U -- map of translations

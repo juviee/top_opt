@@ -1,14 +1,14 @@
-function umax = topComp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
+function umax = top_comp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
                  angle, vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, scale, max_loop, ...
-                 zero_dens_x, zero_dens_y, force, generic_filename);
-    [status, msg, msgID] = mkdir('apdl_const');
-    [status, msg, msgID] = mkdir('maps_const');
-    [status, msg, msgID] = mkdir('pics_const');
-    [status, msg, msgID] = mkdir('gifs_const');
+                 zero_dens_x, zero_dens_y, force, generic_filename)
+    [~, ~, ~] = mkdir('apdl_const');
+    [~, ~, ~] = mkdir('maps_const');
+    [~, ~, ~] = mkdir('pics_const');
+    [~, ~, ~] = mkdir('gifs_const');
     x(1:nel_y,1:nel_x) = volfrac; 
     loop = 0; 
     change = 1.;
-    max_change = 0.04;
+    max_change = 0.01;
     % Setting area of zero density
     el_size = size_x / nel_x;
     zero_nel_x = round( (size_x - zero_dens_x) / el_size );
@@ -20,7 +20,6 @@ function umax = topComp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
             x(ely,elx) = 0.001;
         end
     end
-    active_array = 1-passive;
 
     % Stiffness matrix
     [KE] = lk(size_x / nel_x, size_y / nel_y, ...
@@ -81,7 +80,7 @@ function umax = topComp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
                     1, nel_x, nel_y, force, fixed_dofs, x, angle, 0.5, ...
                     'apdl_const\\APDL_'+generic_filename+'.ans')
     d_mx = plain_d_matrix(E1, E2, mu12, mu21, g12, angle);
-    fea_maps(nel_x, nel_y, U, el_size, el_size, d_mx, x, 10, 0.5, '_MAP_'+generic_filename+'.png')
+    fea_maps(nel_x, nel_y, U, el_size, el_size, d_mx, x, 1000/nel_x, 0.5, '_MAP_'+generic_filename+'.png')
     close all
 end
 
@@ -92,7 +91,7 @@ function [xnew]=OC(nelx,nely,x,volfrac,dc,passive)
       lmid = 0.5*(l2+l1);
       xnew = max(0.001,max(x-move,min(1.,min(x+move,x.*sqrt(-dc./lmid)))));
       xnew(find(passive)) = 0.001;
-      if sum(sum(xnew)) - volfrac*nelx*nely > 0;
+      if sum(sum(xnew)) - volfrac*nelx*nely > 0
         l1 = lmid;
       else
         l2 = lmid;
@@ -145,6 +144,6 @@ end
 function [KE]=lk(size_x_e, size_y_e, angle, vfc, E_fiber, E_mx, mu_fiber, mu_mx)
     [E1, E2, mu12, mu21, g12] = composite_const(E_fiber, E_mx, mu_fiber, mu_mx, vfc);
     d_matrix = plain_d_matrix(E1, E2, mu12, mu21, g12, angle );
-    KE = matrix_k_quad_elem(1, 1, 1, d_matrix);
+    KE = matrix_k_quad_elem(size_x_e, size_y_e, d_matrix);
     writematrix(KE, "new_matrix.txt")
 end

@@ -1,18 +1,18 @@
 function plot_diff_angles
     % Size of construction
-    size_x = 4;
-    size_y = 2;
+    size_x = 1.160/2;
+    size_y = 0.32;
 
     % Size of empty area (right-low)
-    zero_dens_x = size_x / 8;
-    zero_dens_y = size_y / 2.2;
+     zero_dens_x = 0.1;
+     zero_dens_y = 0.15;
 
-    z_size = 0.05;
+    z_size = 0.1;
 
-    force = -147099.75 / z_size;
+    force = -147099.75/z_size;
 
     % Element size
-    size_el = 0.05;
+    size_el = size_y / 20;
 
     % Mechanical properties for glass fiber ВМ-1
     E_fiber = 102.9e9;
