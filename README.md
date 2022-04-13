@@ -2,12 +2,14 @@
 Use plot_diff_angles.m script to launch calculations for isotropic material, 
 anisotropic material with laying angles 0, 22.5, 45, 90
 
-Please, before launch, **create folders apdl_const and pics_const**. This will be fixed later
+~~Please, before launch, create folders apdl_const and pics_const. This will be fixed later~~
 
 Results are contained in:
-+ Density maps and evolution animations in pics_const folder
++ Density maps in pics_const folder
 + APDL scripts in apdl_const folder
++ Structure evolution animations in gifs_const folder
 + Max displacements in u_matlab.txt
++ FEA maps with min-max value text files in maps_const
 
 ## Todo:
 
