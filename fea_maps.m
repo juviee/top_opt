@@ -7,19 +7,23 @@ function fea_maps(nelx, nely, U, x_size, y_size, d_mx, active_passive, plot_el_s
 
     uy_func = @(u_local) [u_local(2), u_local(4), u_local(6), u_local(8)];
     plot_map("U_{y}", nelx, nely, U, uy_func, x_size, y_size, active_passive, plot_el_size, vft, 'u_y_'+filename);
-
-    b_mx = matrix_b(x_size, y_size); % !!! might broke for non-regular mesh
     
-    s_m_func = s_mises_closure(d_mx, b_mx);
-    plot_map("S_{mizes}", nelx, nely, U, s_m_func, x_size, y_size, active_passive, plot_el_size, vft, 's_m_'+filename);
+    st_global = settings;
+    st_draw = st_global.topOptSettings.drawer_properties;
+    if str2num(st_draw.calculate_stress.ActiveValue)    
+        b_mx = matrix_b(x_size, y_size); % !!! might broke for non-regular mesh
+        
+        s_m_func = s_mises_closure(d_mx, b_mx);
+        plot_map("S_{mizes}", nelx, nely, U, s_m_func, x_size, y_size, active_passive, plot_el_size, vft, 's_m_'+filename);
+        
+        sx_func = s_x_func_closure(d_mx, b_mx);
+        sy_func = s_y_func_closure(d_mx, b_mx);
+        sxy_func = s_xy_func_closure(d_mx, b_mx);
     
-    sx_func = s_x_func_closure(d_mx, b_mx);
-    sy_func = s_y_func_closure(d_mx, b_mx);
-    sxy_func = s_xy_func_closure(d_mx, b_mx);
-
-    plot_map("S_{x}", nelx, nely, U, sx_func, x_size, y_size, active_passive, plot_el_size, vft, 's_x_'+filename);
-    plot_map("S_{y}", nelx, nely, U, sy_func, x_size, y_size, active_passive, plot_el_size, vft, 's_y_'+filename);
-    plot_map("S_{xy}", nelx, nely, U, sxy_func, x_size, y_size, active_passive, plot_el_size, vft, 'sxy_'+filename);
+        plot_map("S_{x}", nelx, nely, U, sx_func, x_size, y_size, active_passive, plot_el_size, vft, 's_x_'+filename);
+        plot_map("S_{y}", nelx, nely, U, sy_func, x_size, y_size, active_passive, plot_el_size, vft, 's_y_'+filename);
+        plot_map("S_{xy}", nelx, nely, U, sxy_func, x_size, y_size, active_passive, plot_el_size, vft, 'sxy_'+filename);
+    end
 end
 
 function s_full = s_full_func_closure(d_mx, b_mx)

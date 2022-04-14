@@ -1,14 +1,38 @@
-function umax = top_comp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
-                 angle, vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, scale, max_loop, ...
-                 zero_dens_x, zero_dens_y, force, generic_filename)
+function umax = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force, generic_filename)
     [~, ~, ~] = mkdir('apdl_const');
     [~, ~, ~] = mkdir('maps_const');
     [~, ~, ~] = mkdir('pics_const');
     [~, ~, ~] = mkdir('gifs_const');
+
+    % Load Settings
+    st_global = settings;
+    st_solver = st_global.topOptSettings.solver_settings;
+    st_constr = st_global.topOptSettings.construction_properties;
+    st_mater = st_global.topOptSettings.material_properties;
+    st_draw = st_global.topOptSettings.drawer_properties;
+    
+    % Init vals
+    size_x = str2double(st_constr.size_x.ActiveValue);
+    size_y = str2double(st_constr.size_y.ActiveValue);
+    zero_dens_x = str2double(st_constr.zero_dens_x.ActiveValue);
+    zero_dens_y = str2double(st_constr.zero_dens_y.ActiveValue);
+
+    nel_x = str2num(st_solver.nel_x.ActiveValue);
+    nel_y = str2num(st_solver.nel_y.ActiveValue);
+    rmin = str2double(st_solver.r_min.ActiveValue);
+    penal = str2double(st_solver.penalty_degree.ActiveValue);
+    volfrac = str2double(st_solver.volfrac.ActiveValue);
+    max_change = str2double(st_solver.max_change.ActiveValue);
+    max_loop = str2double(st_solver.max_loop.ActiveValue);
+
+    scale = str2double(st_draw.scale.ActiveValue);
+    fea_plot_size_x = str2double(st_draw.fea_plot_size_x.ActiveValue);
+    vft = str2double(st_draw.activation_threshold.ActiveValue);
+
     x(1:nel_y,1:nel_x) = volfrac; 
     loop = 0; 
     change = 1.;
-    max_change = 0.01;
+    
     % Setting area of zero density
     el_size = size_x / nel_x;
     zero_nel_x = round( (size_x - zero_dens_x) / el_size );
@@ -77,10 +101,11 @@ function umax = top_comp(size_x, size_y, nel_x, nel_y, volfrac, penal, rmin, ...
     [E1, E2, mu12, mu21, g12] = composite_const(E_fiber, E_mx, mu_fiber, mu_mx, vfc_fiber);
     %fixed_dofs = union([1:2:2*(nel_y+1)],[2*(nel_x+1)*(nel_y+1)]);
     plane_save_apdl(E1, E2, mu12, mu21, mu12, g12, g12, size_x/nel_x, size_y/nel_y, ...
-                    1, nel_x, nel_y, force, fixed_dofs, x, angle, 0.5, ...
+                    1, nel_x, nel_y, force, fixed_dofs, x, angle, vft, ...
                     'apdl_const\\APDL_'+generic_filename+'.ans')
     d_mx = plain_d_matrix(E1, E2, mu12, mu21, g12, angle);
-    fea_maps(nel_x, nel_y, U, el_size, el_size, d_mx, x, 1000/nel_x, 0.5, '_MAP_'+generic_filename+'.png')
+    fea_maps(nel_x, nel_y, U, el_size, el_size, d_mx, x, fea_plot_size_x/nel_x,...
+             vft, '_MAP_'+generic_filename+'.png')
     close all
 end
 
