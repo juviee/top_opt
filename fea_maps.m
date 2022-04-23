@@ -90,7 +90,7 @@ function plot_map(val_name, nelx, nely, U, map_function, x_size, y_size, active_
             end
         end
     end
-    colormap(jet(32));
+    colormap(jet(8));
     colorbar;
     caxis([minval maxval]);
 
