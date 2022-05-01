@@ -1,4 +1,4 @@
-function umax = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force, generic_filename)
+function [energy, umax] = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force, generic_filename)
     [~, ~, ~] = mkdir('apdl_const');
     [~, ~, ~] = mkdir('maps_const');
     [~, ~, ~] = mkdir('pics_const');
@@ -16,10 +16,11 @@ function umax = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force
     size_y = str2double(st_constr.size_y.ActiveValue);
     zero_dens_x = str2double(st_constr.zero_dens_x.ActiveValue);
     zero_dens_y = str2double(st_constr.zero_dens_y.ActiveValue);
+    sym_laying = str2num(st_constr.sym_laying.ActiveValue);
 
     nel_x = str2num(st_solver.nel_x.ActiveValue);
     nel_y = str2num(st_solver.nel_y.ActiveValue);
-    rmin = str2double(st_solver.r_min.ActiveValue);
+    rmin_size = str2double(st_solver.r_min.ActiveValue);
     penal = str2double(st_solver.penalty_degree.ActiveValue);
     volfrac = str2double(st_solver.volfrac.ActiveValue);
     max_change = str2double(st_solver.max_change.ActiveValue);
@@ -28,22 +29,53 @@ function umax = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force
     scale = str2double(st_draw.scale.ActiveValue);
     fea_plot_size_x = str2double(st_draw.fea_plot_size_x.ActiveValue);
     vft = str2double(st_draw.activation_threshold.ActiveValue);
+    save_plots = str2num(st_draw.save_plots.ActiveValue);
+
+    if(~sym_laying)
+        nel_x = nel_x * 2;
+        size_x = size_x * 2;
+        fea_plot_size_x = fea_plot_size_x * 2;
+    end
 
     x(1:nel_y,1:nel_x) = volfrac; 
     loop = 0; 
     change = 1.;
     
     % Setting area of zero density
-    el_size = size_x / nel_x;
-    zero_nel_x = round( (size_x - zero_dens_x) / el_size );
-    zero_nel_y = round( (size_y - zero_dens_y) / el_size );
-    passive(1:nel_y, 1:nel_x) = 0;
-    for ely = zero_nel_y:nel_y
-        for elx = zero_nel_x:nel_x
-            passive(ely,elx) = 1;
-            x(ely,elx) = 0.001;
+    if(sym_laying)
+        el_size = size_y / nel_y;
+        rmin = rmin_size / el_size;
+        zero_nel_x = round( (size_x - zero_dens_x) / el_size );
+        zero_nel_y = round( (size_y - zero_dens_y) / el_size );
+        passive(1:nel_y, 1:nel_x) = 0;
+        for ely = zero_nel_y:nel_y
+            for elx = zero_nel_x:nel_x
+                passive(ely,elx) = 1;
+                x(ely,elx) = 0.001;
+            end
+        end
+    else
+        el_size = size_y / nel_y;
+        rmin = rmin_size / el_size;
+        zero_nel_x = round( (size_x - zero_dens_x) / el_size );
+        zero_nel_y = round( (size_y - zero_dens_y) / el_size );
+        passive(1:nel_y, 1:nel_x) = 0;
+        for ely = zero_nel_y:nel_y
+            for elx = zero_nel_x:nel_x
+                passive(ely,elx) = 1;
+                x(ely,elx) = 0.001;
+            end
+        end
+        ely = 0;
+
+        for ely = zero_nel_y:nel_y
+            for elx = 1:round(zero_dens_x / el_size )
+                passive(ely,elx) = 1;
+                x(ely,elx) = 0.001;
+            end
         end
     end
+    
 
     % Stiffness matrix
     [KE] = lk(size_x / nel_x, size_y / nel_y, ...
@@ -76,15 +108,18 @@ function umax = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force
         disp([' It.: ' sprintf('%4i',loop) ' Obj.: ' sprintf('%10.4f',c) ...
               ' Vol.: ' sprintf('%6.3f',sum(sum(x))/(nel_x*nel_y)) ...
               ' ch.: ' sprintf('%6.3f',change )])
-        % PLOT DENSITIES  
-        colormap(gray); imagesc(-x); axis equal; axis tight; axis off;pause(1e-6);
-        if first == 0
-            gif(convertStringsToChars("gifs_const\\GIF_"+generic_filename+".gif")); 
-        else
-            gif;
+        % PLOT DENSITIES 
+        if(save_plots)
+            colormap(gray); imagesc(-x); axis equal; axis tight; axis off;pause(1e-6);
+            if first == 0
+                gif(convertStringsToChars("gifs_const\\GIF_"+generic_filename+".gif")); 
+            else
+                gif;
+            end
+            first = 1;
         end
-        first = 1;
     end
+    energy = c;
     % Get max displacement
     u_full(1:size(U, 1)/2)=0;
     for i = 1:size(U, 1)/2
@@ -92,21 +127,23 @@ function umax = top_comp(vfc_fiber, E_fiber, E_mx, mu_fiber, mu_mx, angle, force
     end
     umax = max(u_full)
     % Save img
-    colormap(gray);
-    imFinal = 1-x;
-    imFinal = imresize(imFinal, scale, 'nearest');
-    imwrite(imFinal, 'pics_const\\TOP_'+generic_filename+'.png',"png");
-    axis equal; axis tight; axis off;
-    % Save APDL file
-    [E1, E2, mu12, mu21, g12] = composite_const(E_fiber, E_mx, mu_fiber, mu_mx, vfc_fiber);
-    %fixed_dofs = union([1:2:2*(nel_y+1)],[2*(nel_x+1)*(nel_y+1)]);
-    plane_save_apdl(E1, E2, mu12, mu21, mu12, g12, g12, size_x/nel_x, size_y/nel_y, ...
-                    1, nel_x, nel_y, force, fixed_dofs, x, angle, vft, ...
-                    'apdl_const\\APDL_'+generic_filename+'.ans')
-    d_mx = plain_d_matrix(E1, E2, mu12, mu21, g12, angle);
-    fea_maps(nel_x, nel_y, U, el_size, el_size, d_mx, x, fea_plot_size_x/nel_x,...
-             vft, '_MAP_'+generic_filename+'.png')
+    if(save_plots)
+        colormap(gray);
+        imFinal = 1-x;
+        imFinal = imresize(imFinal, scale, 'nearest');
+        imwrite(imFinal, 'pics_const\\TOP_'+generic_filename+'.png',"png");
+        axis equal; axis tight; axis off;
+        % Save APDL file
+        [E1, E2, mu12, mu21, g12] = composite_const(E_fiber, E_mx, mu_fiber, mu_mx, vfc_fiber);
+        %fixed_dofs = union([1:2:2*(nel_y+1)],[2*(nel_x+1)*(nel_y+1)]);
+        plane_save_apdl(E1, E2, mu12, mu21, mu12, g12, g12, size_x/nel_x, size_y/nel_y, ...
+                        1, nel_x, nel_y, force, fixed_dofs, x, angle, vft, ...
+                        'apdl_const\\APDL_'+generic_filename+'.ans')
+        d_mx = plain_d_matrix(E1, E2, mu12, mu21, g12, angle);
+        fea_maps(nel_x, nel_y, U, el_size, el_size, d_mx, x, fea_plot_size_x/nel_x,...
+                 vft, '_MAP_'+generic_filename+'.png')
     close all
+    end
 end
 
 %%%%%%%%%% OPTIMALITY CRITERIA UPDATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -156,8 +193,16 @@ function [U, fixeddofs]=FE(nelx,nely,x,penal,KE,force)
       end
     end
     % DEFINE LOADS AND SUPPORTS (HALF MBB-BEAM)
-    F(2,1) = force;
-    fixeddofs   = union([1:2:2*(nely+1)],[2*(nelx+1)*(nely+1)-nely]);
+    st_global = settings;
+    st_constr = st_global.topOptSettings.construction_properties;
+    sym_laying = str2num(st_constr.sym_laying.ActiveValue);
+    if(sym_laying)
+        F(2,1) = force;
+        fixeddofs   = union([1:2:2*(nely+1)],[2*(nelx+1)*(nely+1)-nely]);
+    else
+        F((nelx+1)*(nely+1)+1,1)=force;
+        fixeddofs = union([2*(0+1)*(nely+1)-nely],[2*(nelx+1)*(nely+1)-nely]);
+    end
     alldofs     = [1:2*(nely+1)*(nelx+1)];
     freedofs    = setdiff(alldofs,fixeddofs);
     % SOLVING
